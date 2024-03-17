@@ -1,3 +1,13 @@
 openai
+openai-whisper
+assemblyai
+notebook
 langchain
 numpy
+python-dotenv
+flask
+opencv-python
+tensorflow ==2.12
+flask
+flask-cors
+unicorn

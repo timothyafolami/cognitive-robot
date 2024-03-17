@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Emotion Prediction</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        html, body, .container, .main-container {
+            height: 100%;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+        .main-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .map-container, .emotion-container {
+            padding: 20px;
+            border: 10px solid #ccc;
+            border-radius: 10px;
+            background-color: #fff;
+            width: 65%;
+            position: relative; /* Add relative positioning */
+        }
+        .map-container {
+            text-align: center;
+        }
+        #map {
+            height: 450px;
+            width: 100%;
+        }
+        #voiceButtonContainer {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 999;
+        }
+        
+		#startButton {
+			position: absolute;
+			bottom: 20px;
+			left: 50%;
+			transform: translateX(-50%); /* Center the button horizontally */
+		}
+    </style>
+</head>
+<body>
+<div class="container main-container">
+    <div class="map-container">
+        <h2>Map</h2>
+        <div id="map"></div>
+    </div>
+    <div class="emotion-container">
+        <h2>Real-time Emotion Prediction</h2>
+        <video id="videoElement" width="100%" height="auto" autoplay></video>
+        <br>
+        <button class="btn btn-primary" id="startButton" onclick="startPrediction()">Start Emotion Prediction</button>
+        <button class="btn btn-danger" id="stopButton" style="display:none;" onclick="stopPrediction()">Stop Emotion Prediction</button>
+        <div id="result"></div>
+    </div>
+</div>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+<!-- Bootstrap JS (requires jQuery) -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<!-- Google Maps JavaScript API -->
+<script>(g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({key:"AIzaSyBnSXBGH52zDDvz1a-0pxbLT-kBTG_3U3M",v:"weekly"});</script>
+
+<script>
+    let map;
+
+    async function initMap() {
+        const { Map } = await google.maps.importLibrary("maps");
+
+        map = new Map(document.getElementById("map"), {
+            center: { lat: -34.397, lng: 150.644 },
+            zoom: 8,
+        });
+    }
+
+    initMap();
+</script>
+
+<script>
+    const video = document.getElementById('videoElement');
+    let predictionInterval;
+
+    function startPrediction() {
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                video.srcObject = stream;
+            })
+            .catch(function(err) {
+                console.error('Error accessing the camera: ' + err);
+            });
+
+        video.addEventListener('play', function() {
+            predictionInterval = setInterval(() => {
+                predictEmotion();
+            }, 1000); // Predict every 1 second
+        });
+
+        document.getElementById('startButton').style.display = 'none';
+        document.getElementById('stopButton').style.display = 'inline-block';
+    }
+
+    function stopPrediction() {
+        clearInterval(predictionInterval);
+        document.getElementById('startButton').style.display = 'inline-block';
+        document.getElementById('stopButton').style.display = 'none';
+
+        // Stop the camera stream
+        const stream = video.srcObject;
+        const tracks = stream.getTracks();
+
+        tracks.forEach(function(track) {
+            track.stop();
+        });
+
+        video.srcObject = null;
+    }
+
+    function predictEmotion() {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert canvas to Blob
+        canvas.toBlob(function(blob) {
+            const formData = new FormData();
+            formData.append('file', blob, 'emotion_image.jpg');
+
+            fetch('http://127.0.0.1:80/predict_emotion', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('result');
+                resultDiv.textContent = 'Predicted Emotion: ' + JSON.stringify(data.pred);
+            })
+            .catch(error => console.error('Error:', error));
+        }, 'image/jpeg');
+    }
+</script>
+
+<div id="voiceButtonContainer">
+    <button class="btn btn-secondary" id="voiceButton" onclick="toggleAudioRecording()">
+        <i id="audioIcon" class="fas fa-microphone"></i> <!-- Add font-awesome microphone icon -->
+    </button>
+</div>
+
+<script>
+    // Define variables for audio recording
+    let isRecording = false;
+    let mediaRecorder;
+    let chunks = [];
+
+    function toggleAudioRecording() {
+        const audioIcon = document.getElementById('audioIcon');
+        if (!isRecording) {
+            startRecording();
+            audioIcon.classList.remove('fa-microphone');
+            audioIcon.classList.add('fa-microphone-slash');
+        } else {
+            stopRecording();
+            audioIcon.classList.remove('fa-microphone-slash');
+            audioIcon.classList.add('fa-microphone');
+        }
+    }
+
+    function startRecording() {
+        isRecording = true;
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(function(stream) {
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.stream = stream;
+                mediaRecorder.ondataavailable = function(event) {
+                    chunks.push(event.data);
+                };
+                mediaRecorder.onstop = function() {
+                    const blob = new Blob(chunks, { 'type' : 'audio/ogg; codecs=opus' });
+                    sendAudio(blob);
+                    chunks = []; // Reset chunks for the next recording
+                };
+                mediaRecorder.start();
+            })
+            .catch(function(err) {
+                console.error('Error accessing the microphone: ' + err);
+            });
+    }
+
+    function stopRecording() {
+        isRecording = false;
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+        }
+    }
+
+    function sendAudio(blob) {
+        const formData = new FormData();
+        formData.append('audio', blob, 'voice_record.ogg');
+
+        fetch('http://127.0.0.1:80/convert_audio_to_text', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(data => {
+            console.log('Transcribed text:', data);
+            // Do something with the transcribed text, if needed
+        })
+        .catch(error => console.error('Error:', error));
+    }
+</script>
+
+</body>
+</html>
+
