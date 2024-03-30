@@ -11,10 +11,13 @@ import uvicorn
 import os
 from io import BytesIO
 from tempfile import SpooledTemporaryFile
+from dotenv import load_dotenv
+load_dotenv()
 
 from openai import OpenAI
 
-client = OpenAI(api_key="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")
+openai_apikey = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=openai_apikey)
 
 app = Flask(__name__)
 CORS(app)
