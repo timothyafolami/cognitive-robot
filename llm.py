@@ -19,16 +19,15 @@ from langchain.agents import AgentType, Tool, initialize_agent
 from langchain_community.utilities import SearchApiAPIWrapper
 import warnings
 from flask import Flask, request, jsonify
+from dotenv import load_dotenv
+
+load_dotenv()
 
 warnings.filterwarnings('ignore')
 
-# google_api_key = os.environ.get('GOOGLE_API_KEY')
-# print(google_api_key)
-# os.environ["OPENAI_API_KEY"] = os.environ.get('OPENAI_API_KEY')
-# os.environ["SEARCH_API_KEY"] = os.environ.get("SEARCH_API_KEY")
-google_api_key = 'AIzaSyBnSXBGH52zDDvz1a-0pxbLT-kBTG_3U3M'
-OPENAI_API_KEY = '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'
-SEARCH_API_KEY = '1N4PnjsUL9nBddCWag61KJMq'
+google_api_key = os.environ.get('GOOGLE_API_KEY')
+os.environ["OPENAI_API_KEY"] = os.environ.get('OPENAI_API_KEY')
+os.environ["SEARCH_API_KEY"] = os.environ.get("SEARCH_API_KEY")
 
 
 def get_current_location(api_key):

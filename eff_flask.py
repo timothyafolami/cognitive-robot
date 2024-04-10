@@ -14,9 +14,13 @@ from tempfile import SpooledTemporaryFile
 from llm import ae
 import tempfile
 from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
-client = OpenAI(api_key="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")
+os.environ["OPENAI_API_KEY"] = os.environ.get('OPENAI_API_KEY')
+client = OpenAI() 
 
 app = Flask(__name__)
 CORS(app)
