@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+html,
+body,
+.container {
+  height: 100%;
+}
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f0f0;
+  margin: 0;
+}
+.main-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.map-container,
+.emotion-container {
+  padding: 20px;
+  border: 10px solid #ccc;
+  border-radius: 10px;
+  background-color: #fff;
+  position: relative; /* Add relative positioning */
+}
+.map-container {
+  text-align: center;
+  padding: 20px;
+  border: 10px solid #ccc;
+  border-radius: 10px;
+  background-color: #fff;
+  /* Increase the width of the map container */
+  position: relative;
+  overflow: hidden; /* Add overflow property to ensure buttons stay within container */
+}
+#map {
+  height: 520px;
+  width: 150%;
+  overflow: hidden; /* Add overflow property to ensure map stays within container */
+}
+.controls {
+  margin-top: 10px;
+  border: 1px solid transparent;
+  border-radius: 2px 0 0 2px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  height: 32px;
+  outline: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+#origin-input,
+#destination-input {
+  background-color: #fff;
+  font-family: Roboto;
+  font-size: 15px;
+  font-weight: 300;
+  margin-left: 12px;
+  padding: 0 11px 0 13px;
+  text-overflow: ellipsis;
+  width: 200px;
+}
+
+#origin-input:focus,
+#destination-input:focus {
+  border-color: #4d90fe;
+}
+
+#mode-selector {
+  color: #fff;
+  background-color: #4d90fe;
+  margin-left: 12px;
+  padding: 5px 11px 0px 11px;
+}
+
+#mode-selector label {
+  font-family: Roboto;
+  font-size: 13px;
+  font-weight: 300;
+}
+
+#voiceButtonContainer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 999;
+}
+
+#startButton {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%); 
+  /* Center the button horizontally */
+}
+.transcription-container {
+  position: fixed;
+  bottom: 20px;
+  right: 120px; /* Adjust the position as needed */
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.8
+  ); /* Adjust the background color and opacity */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 5px 10px;
+  max-width: 300px; /* Adjust the maximum width as needed */
+  overflow-y: auto;
+  max-height: 100px; /* Adjust the maximum height as needed */
+}
+.custom-map-control-button {
+  background-color: #fff;
+  position: relative;
+  left: 20rem;
+  border: 0;
+  border-radius: 2rem;
+  box-shadow: 0 1px 4px -1px rgba(0, 0, 0, 0.3);
+  margin-top: 5rem;
+  font-size: 1.2rem;
+  padding: 1rem 0;
+  width: 15rem;
+  cursor: pointer;
+}
+.custom-map-control-button:hover {
+  background: rgb(235, 235, 235);
+}
+
+.opening-hour-list{
+  color: black;
+  font-size: 1rem;
+  padding: .5rem 0;
+}

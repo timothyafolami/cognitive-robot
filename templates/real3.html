@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real-time Emotion Prediction</title>
+    <link rel="stylesheet" href="static/css/main.css" />    
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div class="container main-container">
+      <div class="map-container w-[60%]">
+        <h2>Map</h2>
+        <input
+          id="searchInput"
+          type="text"
+          class="rounded-full text-xl my-3 shadow-xl inline-flex w-[30rem] p-3 justify-center items-center outline-none"
+          placeholder="Search for a location..."
+        />
+        <input
+          id="destination-input"
+          class="controls"
+          type="text"
+          placeholder="Enter a destination location"
+        />
+        <input
+          id="origin-input"
+          class="controls"
+          type="text"
+          placeholder="Enter an origin location"
+        />
+        <br />
+        <button
+          id="get-directions"
+          class="bg-blue-700 text-white my-2 rounded-md w-[10rem] py-2"
+        >
+          Get Directions
+        </button>
+        <div id="map"></div>
+      </div>
+      <div class="emotion-container w-[40%]">
+        <div class="absolute z-50">
+          <h2 class="text-xl text-center">Real-time Emotion Prediction</h2>
+        </div>
+        <div class="absolute top-0 left-0 w-full !h-full">
+          <img src="static/avatar.png" alt="avatar" class="!h-auto max-h-full w-full">
+        </div>
+        <video id="videoElement" width="100%" height="auto" autoplay></video>
+        <br />
+        <button
+          class="btn btn-primary z-20 bg-indigo-800 px-2 py-1 rounded-md text-white"
+          id="startButton"
+          onclick="startPrediction()"
+        >
+          Start Emotion Prediction
+        </button>
+
+        <div class="z-20 absolute">
+        <button
+          class="btn btn-danger bg-red-800 px-2 py-1 rounded-md text-white"
+          id="stopButton"
+          style="display: none"
+          onclick="stopPrediction()"
+        >
+          Stop Emotion Prediction
+        </button>
+        </div>
+        <div id="result" class="absolute z-20 bottom-10"></div>
+        
+
+        <div class="transcription-container">
+          <div id="transcription"></div>
+          <div id="llmResult"></div>
+          <button id="speakButton" class="btn btn-primary z-20 bg-indigo-800 px-2 py-1 rounded-md text-white">Speak</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- drawer component -->
+    <div
+      id="drawer-example"
+      class="fixed top-0 left-0 z-40 h-screen overflow-y-auto transition-transform -translate-x-full bg-white w-1/5 dark:bg-gray-800"
+      tabindex="-1"
+      aria-labelledby="drawer-label"
+    >
+      <button
+        type="button"
+        data-drawer-target="drawer-example"
+        data-drawer-hide="drawer-example"
+        onclick="closeDrawer()"
+        aria-controls="drawer-example"
+        class="text-black bg-transparent rounded-lg text-md outline-none w-6 h-6 absolute top-2.5 end-2.5 flex items-center justify-center"
+      >
+        <svg
+          class="w-3 h-3"
+          aria-hidden="true"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 14 14"
+        >
+          <path
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+          />
+        </svg>
+        <span class="sr-only">Close menu</span>
+      </button>
+
+      <div>
+        <img
+          src="https://res.cloudinary.com/phantom1245/image/upload/v1711083113/default_geocode-1x_xavy7w.png"
+          alt=""
+          class="w-full"
+        />
+      </div>
+      <div class="p-4 gap-4">
+        <div
+          id="placeName"
+          class="w-[90] text-xl text-blue-gray-800 font-normal"
+        ></div>
+        <div
+          id="ratingDisplay"
+          class="flex items-center text-center gap-2 font-medium text-blue-gray-500"
+        >
+          <div id="rating" class="text-blue-gray-500"></div>
+          <div class="flex items-center" id="ratingStars"></div>
+          (
+          <div id="userReview"></div>
+          )
+        </div>
+        <div id="placeType" class="pt-2 text-xl text-gray-500"></div>
+      </div>
+      <div
+        class="font-sans font-medium text-center text-xl text-blue-600 border-b-2 border-blue-600 border-solid pb-2"
+      >
+        Overview
+      </div>
+      <div class="my-6 px-2">
+        <div class="flex justify-between items-center">
+          <div class="flex flex-col items-center gap-2">
+            <div
+              class="bg-blue-600 cursor-pointer text-white w-11 h-11 rounded-full inline-flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 512 512"
+                fill="currentColor"
+                class="w-6 h-6"
+              >
+                <path
+                  d="M227.7 11.7c15.6-15.6 40.9-15.6 56.6 0l216 216c15.6 15.6 15.6 40.9 0 56.6l-216 216c-15.6 15.6-40.9 15.6-56.6 0l-216-216c-15.6-15.6-15.6-40.9 0-56.6l216-216zm87.6 137c-4.6-4.6-11.5-5.9-17.4-3.5s-9.9 8.3-9.9 14.8v56H224c-35.3 0-64 28.7-64 64v48c0 13.3 10.7 24 24 24s24-10.7 24-24V280c0-8.8 7.2-16 16-16h64v56c0 6.5 3.9 12.3 9.9 14.8s12.9 1.1 17.4-3.5l80-80c6.2-6.2 6.2-16.4 0-22.6l-80-80z"
+                />
+              </svg>
+            </div>
+            <div class="text-center text-md text-blue-600">Directions</div>
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <div
+              class="border-[2px] border-solid cursor-pointer border-blue-600 text-white w-11 h-11 rounded-full inline-flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-6 h-6 text-blue-600"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z"
+                />
+              </svg>
+            </div>
+            <div class="text-center text-md text-blue-600">Save</div>
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <div
+              class="border-[2px] border-solid cursor-pointer border-blue-600 text-white w-11 h-11 rounded-full inline-flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-6 h-6 text-blue-600"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
+                />
+              </svg>
+            </div>
+            <div class="text-center text-md text-blue-600">Nearby</div>
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <div
+              class="border-[2px] border-solid cursor-pointer border-blue-600 text-white w-11 h-11 rounded-full inline-flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-6 h-6 text-blue-600"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"
+                />
+              </svg>
+            </div>
+            <div class="w-20 text-center text-md text-blue-600">Send</div>
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <div
+              class="border-[2px] border-solid cursor-pointer border-blue-600 text-white w-11 h-11 rounded-full inline-flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-6 h-6 text-blue-600"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
+                />
+              </svg>
+            </div>
+            <div class="text-center text-md text-blue-600">Share</div>
+          </div>
+        </div>
+      </div>
+      <div class="px-6 gap-4">
+        <div class="flex items-center gap-6 w-full">
+          <div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-8 h-8 text-blue-600"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
+              />
+            </svg>
+          </div>
+
+          <div id="formattedAddress" class="text-lg"></div>
+        </div>
+        <div class="flex gap-6 mt-3 w-full" id="openHourDiv">
+          <div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-8 h-8 text-blue-600"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h6 class="mb-0">
+              <button
+                class="relative flex items-center w-full font-medium text-left transition-all ease-in text-black rounded-t-1 group text-lg"
+                onclick="openDropdown()"
+              >
+                <span id="openingHour"></span>
+                <i
+                  class="absolute right-0 pt-1 text-lg transition-transform fa fa-chevron-down group-open:rotate-180"
+                ></i>
+              </button>
+            </h6>
+            <div
+              class="h-0 overflow-hidden transition-all duration-300 ease-in-out"
+              id="dropDownDetails"
+            >
+              <div
+                class="text-md py-4 leading-normal text-blue-gray-500/80"
+                id="dropDownDetailsList"
+              ></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-6 mt-4 w-full" id="webisiteDiv">
+          <div>
+            <img src=" https://www.gstatic.com/images/icons/material/system_gm/1x/public_gm_blue_24dp.png" alt="" class="w-7 h-7 ml-1">
+          </div>
+          <div id="webisite" class="text-lg "></div>
+        </div>
+        <div class="flex items-center gap-6 mt-4 w-full" id="plusCodeDiv">
+          <div>
+            <img src=" https://maps.gstatic.com/mapfiles/maps_lite/images/2x/ic_plus_code.png " alt="" class="w-7 h-7 ml-1">
+          </div>
+          <div id="plusCode" class="text-lg "></div>
+        </div>
+        <div class="flex gap-6 mt-4 w-full" id="phoneNumberDiv">
+          <div>
+            <img src="https://www.gstatic.com/images/icons/material/system_gm/1x/phone_gm_blue_24dp.png" alt="" class="w-7 h-8 ml-1">
+          </div>
+          <div id="phoneNumber" class="text-lg "></div>
+        </div>
+        <div class="flex gap-6 mt-4 w-full" >
+          <div>
+            <img src="https://maps.gstatic.com/consumer/images/icons/1x/send_to_mobile_alt_gm_blue_24dp.png" alt="" class="w-7 h-8 ml-1">
+          </div>
+          <div class="text-lg ">Send to your phone</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+    <!-- Google Maps JavaScript API -->
+    <script>
+      ((g) => {
+        var h,
+          a,
+          k,
+          p = "The Google Maps JavaScript API",
+          c = "google",
+          l = "importLibrary",
+          q = "__ib__",
+          m = document,
+          b = window;
+        b = b[c] || (b[c] = {});
+        var d = b.maps || (b.maps = {}),
+          r = new Set(),
+          e = new URLSearchParams(),
+          u = () =>
+            h ||
+            (h = new Promise(async (f, n) => {
+              await (a = m.createElement("script"));
+              e.set("libraries", [...r] + "");
+              for (k in g)
+                e.set(
+                  k.replace(/[A-Z]/g, (t) => "_" + t[0].toLowerCase()),
+                  g[k]
+                );
+              e.set("callback", c + ".maps." + q);
+              a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
+              d[q] = f;
+              a.onerror = () => (h = n(Error(p + " could not load.")));
+              a.nonce = m.querySelector("script[nonce]")?.nonce || "";
+              m.head.append(a);
+            }));
+        d[l]
+          ? console.warn(p + " only loads once. Ignoring:", g)
+          : (d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n)));
+      })({ key: "AIzaSyBnSXBGH52zDDvz1a-0pxbLT-kBTG_3U3M", v: "weekly" });
+    </script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnSXBGH52zDDvz1a-0pxbLT-kBTG_3U3M&libraries=places"></script>
+    <script src="static/index.js"></script>
+
+    <script>
+      const video = document.getElementById("videoElement");
+      let avatarImage = document.getElementById("avatarImage");
+      let predictionInterval;
+
+      function startPrediction() {
+        navigator.mediaDevices
+          .getUserMedia({ video: true })
+          .then(function (stream) {
+            video.srcObject = stream;
+          })
+          .catch(function (err) {
+            console.error("Error accessing the camera: " + err);
+          });
+
+        video.addEventListener("play", function () {
+          predictionInterval = setInterval(() => {
+            predictEmotion();
+          }, 3000); // Predict every 1 second
+        });
+
+        document.getElementById("startButton").style.display = "none";
+        document.getElementById("stopButton").style.display = "inline-block";
+      }
+
+      function stopPrediction() {
+        clearInterval(predictionInterval);
+        document.getElementById("startButton").style.display = "inline-block";
+        document.getElementById("stopButton").style.display = "none";
+
+        // Stop the camera stream
+        const stream = video.srcObject;
+        const tracks = stream.getTracks();
+
+        document.getElementById("result").textContent = "";
+        
+
+        tracks.forEach(function (track) {
+          track.stop();
+        });
+
+        video.srcObject = null;
+      }
+
+      function predictEmotion() {
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext("2d");
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert canvas to Blob
+        canvas.toBlob(function (blob) {
+          const formData = new FormData();
+          formData.append("file", blob, "emotion_image.jpg");
+
+          fetch("http://127.0.0.1:8080/predict_emotion", {
+            method: "POST",
+            body: formData,
+            headers: {
+              Accept: "application/json",
+            },
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              const resultDiv = document.getElementById("result");
+              resultDiv.textContent =
+                "Predicted Emotion: " + JSON.stringify(data.pred);
+            })
+            .catch((error) => console.error("Error:", error));
+        }, "image/jpeg");
+      }
+    </script>
+
+    <div id="voiceButtonContainer">
+      <button
+        class="btn btn-secondary"
+        id="voiceButton"
+        onclick="toggleAudioRecording()"
+      >
+        <i id="audioIcon" class="fas fa-microphone"></i>
+        <!-- Add font-awesome microphone icon -->
+      </button>
+    </div>
+
+    <script>
+      // Define variables for audio recording
+      let isRecording = false;
+      let mediaRecorder;
+      let chunks = [];
+      const transcriptionDiv = document.getElementById("transcription");
+      const speakButton = document.getElementById('speakButton');
+      const llmdiv = document.getElementById('llmResult');
+
+      function toggleAudioRecording() {
+        const audioIcon = document.getElementById("audioIcon");
+        if (!isRecording) {
+          startRecording();
+          audioIcon.classList.remove("fa-microphone");
+          audioIcon.classList.add("fa-microphone-slash");
+        } else {
+          stopRecording();
+          audioIcon.classList.remove("fa-microphone-slash");
+          audioIcon.classList.add("fa-microphone");
+        }
+      }
+
+      function startRecording() {
+        isRecording = true;
+        transcriptionDiv.textContent = "";
+        llmdiv.textContent = "";
+        navigator.mediaDevices
+          .getUserMedia({ audio: true })
+          .then((stream) => {
+            audioStream = stream;
+            recorder = new MediaRecorder(stream);
+            let audioChunks = [];
+            recorder.ondataavailable = (event) => {
+              audioChunks.push(event.data);
+            };
+            recorder.onstop = () => {
+              const audioBlob = new Blob(audioChunks, {
+                type: "audio/ogg; codecs=opus",
+              });
+              sendAudio(audioBlob);
+            };
+            recorder.start();
+          })
+          .catch((error) => {
+            console.error("Error accessing microphone:", error);
+          });
+      }
+
+      function sendAudio(blob) {
+        const formData = new FormData();
+        formData.append("file", blob, "recording.ogg");
+
+        fetch("http://127.0.0.1:8080/audio2text", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((transcription) => {
+            // console.log(transcription)
+            transcriptionDiv.textContent += "You: " + transcription.transcribed_text + " ";
+            const llmResultDiv = document.getElementById('llmResult');
+            llmResultDiv.textContent = "Bot: " + transcription.llm_output;
+          })
+          .catch((error) => console.error("Error:", error));
+      }
+
+      function stopRecording() {
+        isRecording = false;
+        recorder.stop();
+        audioStream.getTracks().forEach((track) => track.stop());
+
+        // const transcribedText = transcriptionDiv.textContent.trim();
+        //
+        // fetch('http://127.0.0.1:8080/audio2text', {
+        //   method: 'POST',
+        //   headers: {
+        //       'Content-Type': 'application/json'
+        //   },
+        //   body: JSON.stringify({ text: transcribedText })
+        //   })
+        // .then(response => response.json())
+        // .then(data => {
+        //     // Display the processed text on the webpage
+        //     console.log('llm', data)
+        //     const llmResultDiv = document.getElementById('llmResult');
+        //     llmResultDiv.textContent = "Bot: " + data.llm_output;
+        // })
+        // .catch(error => console.error('Error processing LLM:', error));
+      }
+      
+            
+      speakButton.addEventListener('click', () => {
+		// const text = transcription.textContent.trim();
+        const text = llmResult.textContent.trim();
+		if (text !== '') {
+			convertAndSpeak(text);
+		}
+	});
+      
+		 
+	  function convertAndSpeak(text) {
+		// Convert text to speech using Deepgram API
+		const DEEPGRAM_URL = "https://api.deepgram.com/v1/speak?model=aura-asteria-en";
+		const DEEPGRAM_API_KEY = "fb16011642005947ce81a75725aa14dc884822ce";
+
+		const payload = JSON.stringify({
+			text: text,
+		});
+
+		const requestConfig = {
+			method: "POST",
+			headers: {
+			    Authorization: `Token ${DEEPGRAM_API_KEY}`,
+			    "Content-Type": "application/json",
+			},
+			body: payload
+		};
+
+		fetch(DEEPGRAM_URL, requestConfig)
+			.then(response => {
+			    if (!response.ok) {
+			        throw new Error('Network response was not ok');
+			    }
+			    return response.blob();
+			})
+			.then(blob => {
+			    const url = URL.createObjectURL(blob);
+			    const audio = new Audio(url);
+			    audio.play();
+			    window.URL.revokeObjectURL(url);
+			})
+			.catch(error => {
+			    console.error('Error:', error);
+			});
+
+		// Speak text using Web Speech API
+		speak(text);
+	}
+
+	function speak(text) {
+		const utterance = new SpeechSynthesisUtterance(text);
+		speechSynthesis.speak(utterance);
+	}
+    </script>
+  </body>
+</html>
