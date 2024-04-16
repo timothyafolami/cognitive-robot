@@ -10,6 +10,9 @@ from langchain.agents.format_scratchpad import format_to_openai_function_message
 from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain.agents import load_tools
+from langchain import PromptTemplate
+from langchain.chains import LLMChain
+from langchain_openai import OpenAI as llm_openai
 from langchain.tools import BaseTool
 from typing import Optional, Type, Union
 from langchain.pydantic_v1 import BaseModel, Field
@@ -198,6 +201,33 @@ def test():
         res1 = agent_executor.invoke({"input": input1})
         print(res1['output'])
 
+
+def location_extractor(text):
+    """
+    Extracts the location from the user's input
+    :param text: The user's input
+    :return: The extracted location
+    """
+    user_input = text
+
+    llm = llm_openai(api_key=OPENAI_API_KEY)
+    prompt = PromptTemplate(
+        input_variables=["user_input"],
+        template="""
+        The user says: "{user_input}"
+        Look or anything similar to the address or location in the user's input and extract it.
+        At most you should be able to at least extract the users location, then if it's well detailed you can then extract the destination.
+        Note: 
+        1. There might be a case where the user didn't mention the location, in that case, just return None.
+        2. The user's input is transcribed from the user's voice input. So you will want to first of all analyze the text to extract the necessary information.
+        Once you have the location, return it (either one or both).
+        """,
+    )
+
+    chain = LLMChain(llm=llm, prompt=prompt)
+
+    response = chain.run(text=user_input)
+    return response
 
 # app = Flask(__name__)
 
