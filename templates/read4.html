@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Real-time Emotion Prediction</title>
+    <title>MAP HELPER</title>
     <link rel="stylesheet" href="static/css/main.css" />    
     <!-- Bootstrap CSS -->
     <link
@@ -11,11 +11,12 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
     />
   </head>
-  <body>
+  <body onload="startPrediction()">
     <div class="container main-container">
       <div class="map-container w-[60%]">
-        <h2>Map</h2>
+        <!-- <h2>Map</h2> -->
         <input
+          type="hidden"
           id="searchInput"
           type="text"
           class="rounded-full text-xl my-3 shadow-xl inline-flex w-[30rem] p-3 justify-center items-center outline-none"
@@ -44,7 +45,7 @@
       </div>
       <div class="emotion-container w-[40%]">
         <div class="absolute z-50">
-          <h2 class="text-xl text-center">Real-time Emotion Prediction</h2>
+          <!-- <h2 class="text-xl text-center">Real-time Emotion Prediction</h2> -->
         </div>
         <div class="absolute top-0 left-0 w-full !h-full">
           <img src="static/avatar.png" alt="avatar" class="!h-auto max-h-full w-full">
@@ -52,6 +53,7 @@
         <video id="videoElement" width="100%" height="auto" autoplay></video>
         <br />
         <button
+          type="button" hidden
           class="btn btn-primary z-20 bg-indigo-800 px-2 py-1 rounded-md text-white"
           id="startButton"
           onclick="startPrediction()"
@@ -60,14 +62,14 @@
         </button>
 
         <div class="z-20 absolute">
-        <button
+        <!-- <button
           class="btn btn-danger bg-red-800 px-2 py-1 rounded-md text-white"
           id="stopButton"
           style="display: none"
           onclick="stopPrediction()"
-        >
+        > 
           Stop Emotion Prediction
-        </button>
+        </button> -->
         </div>
         <div id="result" class="absolute z-20 bottom-10"></div>
         
@@ -75,7 +77,7 @@
         <div class="transcription-container">
           <div id="transcription"></div>
           <div id="llmResult"></div>
-          <button id="speakButton" class="btn btn-primary z-20 bg-indigo-800 px-2 py-1 rounded-md text-white">Speak</button>
+          <button id="speakButton" class="btn btn-primary z-20 bg-indigo-800 px-2 py-1 rounded-md text-white" hidden>Speak</button>
         </div>
       </div>
     </div>
@@ -411,14 +413,14 @@
           }, 3000); // Predict every 1 second
         });
 
-        document.getElementById("startButton").style.display = "none";
-        document.getElementById("stopButton").style.display = "inline-block";
+        // document.getElementById("startButton").style.display = "none";
+        // document.getElementById("stopButton").style.display = "inline-block";
       }
 
       function stopPrediction() {
         clearInterval(predictionInterval);
         document.getElementById("startButton").style.display = "inline-block";
-        document.getElementById("stopButton").style.display = "none";
+        // document.getElementById("stopButton").style.display = "none";
 
         // Stop the camera stream
         const stream = video.srcObject;
@@ -456,8 +458,9 @@
             .then((response) => response.json())
             .then((data) => {
               const resultDiv = document.getElementById("result");
-              resultDiv.textContent =
-                "Predicted Emotion: " + JSON.stringify(data.pred);
+              // resultDiv.textContent =
+              //  "Predicted Emotion: " + JSON.stringify(data.pred);
+              console.log("Predicted Emotion: " + JSON.stringify(data.pred))
             })
             .catch((error) => console.error("Error:", error));
         }, "image/jpeg");
@@ -533,10 +536,11 @@
         })
           .then((response) => response.json())
           .then((transcription) => {
-            // console.log(transcription)
+            // console.log(transcription.transcribed_text)
             transcriptionDiv.textContent += "You: " + transcription.transcribed_text + " ";
             const llmResultDiv = document.getElementById('llmResult');
             llmResultDiv.textContent = "Bot: " + transcription.llm_output;
+            speak(transcription.llm_output)
           })
           .catch((error) => console.error("Error:", error));
       }
@@ -617,7 +621,7 @@
     function speak(text) {
         var voices = window.speechSynthesis.getVoices();
         const i = 108 // 108
-        console.log(voices[i])
+        // console.log(voices[i])
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 0.9;
         utterance.pitch = 1.25;

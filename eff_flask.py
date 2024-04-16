@@ -19,14 +19,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-os.environ["OPENAI_API_KEY"] = os.environ.get('OPENAI_API_KEY')
-client = OpenAI() 
+
+openai_api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key="openai_api_key")
+# print(client.api_key)
 
 app = Flask(__name__)
 CORS(app)
 
 face_cascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
-emotion_model = load_model('model_effNETb7.h5', compile=False)
+emotion_model = load_model('model_weights.h5', compile=False)
 emotion_results = ['Angry', 'Happy', 'Neutral', 'Sad', 'Surprise']
 
 text = None
@@ -34,7 +36,7 @@ emotion = None
 
 @app.route('/')
 def home():
-    return render_template('real3.html')
+    return render_template('read4.html')
 
 
 @app.route('/predict_emotion', methods=['POST'])

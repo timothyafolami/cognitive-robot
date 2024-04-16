@@ -48,6 +48,34 @@ async function initMap() {
 
   directionsRenderer.setMap(map);
 
+  // Code for geolocation
+  function getLocation() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+
+          infoWindow.setPosition(pos);
+          infoWindow.setContent("Location found.");
+          infoWindow.open(map);
+          map.setCenter(pos);
+        },
+        () => {
+          handleLocationError(true, infoWindow, map.getCenter());
+        }
+      );
+    } else {
+      // Browser doesn't support Geolocation
+      handleLocationError(false, infoWindow, map.getCenter());
+    }
+  }
+
+  getLocation(); // Call this function to get the user's location on page load
+
+
   const originInput = document.getElementById("origin-input");
   const destinationInput = document.getElementById("destination-input");
 
@@ -85,8 +113,8 @@ async function initMap() {
 
   const locationButton = document.createElement("button");
 
-  locationButton.textContent = "Pan to Current Location";
-  locationButton.classList.add("custom-map-control-button");
+  // locationButton.textContent = "Pan to Current Location";
+  // locationButton.classList.add("custom-map-control-button");
   map.controls[google.maps.ControlPosition.TOP_CENTER].push(
     locationButton
   );
@@ -129,7 +157,7 @@ async function initMap() {
   const input = document.getElementById("searchInput");
   const searchBox = new google.maps.places.SearchBox(input);
 
-  map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+  // map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
   // map.controls[google.maps.ControlPosition.TOP_LEFT].push(originInput);
   // map.controls[google.maps.ControlPosition.TOP_LEFT].push(destinationInput);
 
