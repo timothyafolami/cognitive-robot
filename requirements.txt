@@ -1,13 +1,9 @@
+psycopg2
+flask
+sqlalchemy
 openai
-openai-whisper
-assemblyai
-notebook
 langchain
-numpy
-python-dotenv
-flask
-opencv-python
-tensorflow ==2.12
-flask
-flask-cors
-unicorn
+langchain_openai
+langchain_community
+psycopg2-binary
+ultralytics

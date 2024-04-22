@@ -630,6 +630,29 @@
         utterance.lang = 'en-US';
         speechSynthesis.speak(utterance);
     }
+
+    </script>
+    <script>
+      function getDirections() {
+        const text = "I'm currently at bosso, Minna.. and I'm going to try to find the nearest supermarket in chanchaga Minna.. \nemotion: Neutral";
+        fetch('/get_directions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: text })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data['current location'], data['destination']);
+            document.getElementById('origin-input').textContent = data['current location'];
+            document.getElementById('destination-input').textContent = data['destination'];
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Call getDirections when the page loads
+    window.onload = getDirections;
     </script>
   </body>
 </html>
