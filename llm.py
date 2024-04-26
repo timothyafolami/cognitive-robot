@@ -138,8 +138,9 @@ prompt = ChatPromptTemplate.from_messages(
     Your interactions with users should be conversational and engaging, aiming to create a pleasant user experience.
     You're meant to ask users questions and also help them with answers.
 
-    Establishing Connection: Initiate the conversation by getting to know the user.
+    Establishing Connection: Initiate the conversation by getting to know the user by asking the user questions.
     Ask about their name, inquire about their day, and engage in light conversation to build rapport.
+    Ask the user for his loacation and destination together.
 
     Location and Destination Query: Politely ask the user about their current location be it their address, and also their intended destination.
     Note that their intended destination might not be an address but a place, for example a supermarket ot something.
@@ -188,29 +189,23 @@ def ae():
     return agent_executor
 
 
-def location_extractor(text):
-    """
-    Extracts the location from the user's input
-    :param text: The user's input
-    :return: The extracted location
-    """
-    user_input = text
-
-    llm = llm_openai(api_key=OPENAI_API_KEY)
-    prompt = PromptTemplate(
-        input_variables=["user_input"],
-        template="""The user says: "{user_input}" Look for anything similar to the address or location in the user's 
-        input and extract it. At most you should be able to at least extract the users location, then if it's well 
-        detailed you can then extract the destination. Note: 1. There might be a case where the user didn't mention 
-        the location, in that case, just return None. 2. The user's input is transcribed from the user's voice input. 
-        So you will want to first of all analyze the text to extract the necessary information. Once you have the 
-        location, return it (either one or both). ,"""
-    )
-
-    chain = LLMChain(llm=llm, prompt=prompt)
-
-    response = chain.run(text=user_input)
-    return response
+def le(text):
+    llm = ChatOpenAI(temperature=0)
+    memory = ConversationBufferMemory(memory_key="location_chat_history", return_messages=True)
+    sys_prompt = """The user says: "{text}" Look for anything similar to the address or location in the user's 
+            input and extract it. At most you should be able to at least extract the users location, then if it's well 
+            detailed you can then extract the destination. Note: 1. There might be a case where the user didn't mention 
+            the location, in that case, just return None. 2. The user's input is transcribed from the user's voice input. 
+            So you will want to first of all analyze the text to extract the necessary information. Once you have the 
+            location, return it (either one or both), return the location as a dictionary with these keys: "current location", "destination","""
+    prompt = ChatPromptTemplate.from_messages([SystemMessagePromptTemplate.from_template(sys_prompt), 
+                                               MessagesPlaceholder(variable_name="location_chat_history"), 
+                                               HumanMessagePromptTemplate.from_template("{text}")])
+    conversation = LLMChain(llm=llm, prompt=prompt, memory=memory)
+    
+    memory.chat_memory.add_user_message(text)
+    response = conversation.invoke({"text": text})
+    return json.loads(response['text'])
 
 
 def test():
