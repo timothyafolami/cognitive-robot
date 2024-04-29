@@ -16,94 +16,78 @@ from langchain.pydantic_v1 import BaseModel, Field
 import googlemaps
 from datetime import datetime
 from langchain.agents import AgentType, Tool, initialize_agent
-from langchain_community.utilities import SearchApiAPIWrapper
+from langchain_community.utilities import SerpAPIWrapper
 import warnings
-from flask import Flask, request, jsonify
-from langchain_openai import OpenAI as llm_openai
-from langchain import PromptTemplate
 from langchain.chains import LLMChain
+from langchain_community.tools import GooglePlacesTool
 warnings.filterwarnings('ignore')
+from dotenv import load_dotenv
 
-google_api_key = os.environ.get('GOOGLE_API_KEY')
-# print(google_api_key)
-os.environ["OPENAI_API_KEY"] = os.environ.get('OPENAI_API_KEY')
-os.environ["SEARCH_API_KEY"] = os.environ.get("SEARCH_API_KEY")
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+load_dotenv()
+
+os.environ["GPLACES_API_KEY"] = os.getenv('GOOGLE_API_KEY')
+os.environ["SERPAPI_API_KEY"] = os.getenv("SERPAPI_API_KEY")
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 
-def get_current_location(api_key):
-    url = f'https://www.googleapis.com/geolocation/v1/geolocate?key={api_key}'
-    response = requests.post(url)
-    if response.status_code == 200:
-        data = response.json()
-        latitude = data['location']['lat']
-        longitude = data['location']['lng']
-        return latitude, longitude
-    else:
-        print("Failed to retrieve location.")
-        return None, None
+# def get_current_location(api_key):
+#     url = f'https://www.googleapis.com/geolocation/v1/geolocate?key={api_key}'
+#     response = requests.post(url)
+#     if response.status_code == 200:
+#         data = response.json()
+#         latitude = data['location']['lat']
+#         longitude = data['location']['lng']
+#         return latitude, longitude
+#     else:
+#         print("Failed to retrieve location.")
+#         return None, None
 
 
 # latitude, longitude = get_current_location(google_api_key)
 
-class MapAssistantInput(BaseModel):
-    initial_location: str = Field(description="The initial location of the user")
-    destination: Optional[str] = Field(description="The destination of the user")
-    mov_method: Optional[str] = Field(description="The method of movement")
+# class MapAssistantInput(BaseModel):
+#     initial_location: str = Field(description="The initial location of the user")
+#     destination: Optional[str] = Field(description="The destination of the user")
+#     mov_method: Optional[str] = Field(description="The method of movement")
 
 
-class MapAssistantTool(BaseTool):
-    name = "map_assistant"
-    description = "This tool helps with getting information about the user movement"
-    args_schema: Type[BaseModel] = MapAssistantInput
+# class MapAssistantTool(BaseTool):
+#     name = "map_assistant"
+#     description = "This tool helps with getting information about the user movement"
+#     args_schema: Type[BaseModel] = MapAssistantInput
 
-    def _run(self, initial_location: str, destination: Optional[str] = None, mov_method: Optional[str] = None) -> Union[
-        dict, str]:
-        gmaps = googlemaps.Client(key=google_api_key)
+#     def _run(self, initial_location: str, destination: Optional[str] = None, mov_method: Optional[str] = None) -> Union[
+#         dict, str]:
+#         gmaps = googlemaps.Client(key=google_api_key)
 
-        # Geocoding an address
-        geocode_result = gmaps.geocode(initial_location)
+#         # Geocoding an address
+#         geocode_result = gmaps.geocode(initial_location)
 
-        # Request directions via public transit
-        now = datetime.now()
-        directions_result = gmaps.directions(initial_location,
-                                             destination,
-                                             mode=mov_method,
-                                             departure_time=now)
-        if geocode_result:
-            return geocode_result
-        if directions_result:
-            return directions_result
+#         # Request directions via public transit
+#         now = datetime.now()
+#         directions_result = gmaps.directions(initial_location,
+#                                              destination,
+#                                              mode=mov_method,
+#                                              departure_time=now)
+#         if geocode_result:
+#             return geocode_result
+#         if directions_result:
+#             return directions_result
 
 
-map_assistant_tool = MapAssistantTool()
-search = SearchApiAPIWrapper(searchapi_api_key=SEARCH_API_KEY)
+places = GooglePlacesTool()
+search = SerpAPIWrapper()
 llm_math = load_tools(['llm-math'], llm=ChatOpenAI(temperature=0, openai_api_key=OPENAI_API_KEY))
 
 
 @tool
 def google_map_ass(text):
-    """Used when there is a need to locate user and destination, then also get directions between user's and
-    destination's location If a user mentions anything that needs to relate to his location you first of all use the
-    get current location to get it's longitude and lattitude automatically. When there's an issue with getting the
-    user location, just ask the user for it instead.
+    """Used when there is a need search for places around user. 
+    Used for location and navigation.
     """
     # getting latitude and longitude
-    try:
-        latitude, longitude = get_current_location(google_api_key)
-        if latitude is not None and longitude is not None:
-            return (latitude, longitude)
-    except:
-        print("There's an error getting your location, kindly provide a text address instead")
-
-    # use this when it comes to getting direction between two know places
-    initial_location = ''  # you get ths from the user
-    destination = ''  # you get this based on users destination
-    movement_method = ''  # you also ask the user for this.
-    response = map_assistant_tool.run(initial_location, destination, movement_method)
-
-    if response:
-        return response
+    response = places.run(text)
+    return response
 
 
 @tool
@@ -117,17 +101,17 @@ def google_search(text):
 
 
 @tool
-def distance_calculation(text):
-    """This is used to calculate distance between places when needed.
-  Make sure the text input is structured such that it can be understood by the tool.
+def dist(text):
+    """This is used to math calculation purpose, it can be used to calculate the distance between twp places if possible.
+       Make sure the text input is structured such that it can be understood by the tool.
   """
     dist = llm_math.run(text)
     return dist
 
 
-tools = [google_map_ass, google_search]
+tools = [google_map_ass, google_search, dist]
 
-llm_chat = ChatOpenAI(temperature=0, openai_api_key=OPENAI_API_KEY)
+llm_chat = ChatOpenAI(temperature=0, openai_api_key=OPENAI_API_KEY, model="gpt-3.5-turbo-16k")
 
 MEMORY_KEY = "chat_history"
 
@@ -138,29 +122,32 @@ prompt = ChatPromptTemplate.from_messages(
     Your interactions with users should be conversational and engaging, aiming to create a pleasant user experience.
     You're meant to ask users questions and also help them with answers.
 
-    Establishing Connection: Initiate the conversation by getting to know the user by asking the user questions.
-    Ask about their name, inquire about their day, and engage in light conversation to build rapport.
-    Ask the user for his loacation and destination together.
+    You are meant to execute the following: 
 
-    Location and Destination Query: Politely ask the user about their current location be it their address, and also their intended destination.
-    Note that their intended destination might not be an address but a place, for example a supermarket ot something.
-    So you want to properly handle their queries properly.
-    Remember, your primary function is to assist with Google Maps navigation, direct them in the right route and so on.
+        1. Processing User Input: The user input will be a text, in that text, we'll have the user emotions added to it.
+        Note that the text is transcribed from the user’s voice input, so you will want to first of all analyze the text to extract the necessary information.
+        Also, take note of the user’s emotional state to tailor your responses accordingly, so as to ensure that you have the best personality that matches user's personality.
 
-    Processing User Input: The user input will be a text, in that text, we'll have the user emotions added to it.
-    Note that the text is transcribed from the user’s voice input, so you will want to first of all analyze the text to extract the necessary information.
-    Also, take note of the user’s emotional state to tailor your responses accordingly, so as to ensure that you have the best personality that matches user's personality.
+        2. Establishing Connection: Initiate the conversation by getting to know the user by asking the user questions.
+        Ask about their name, inquire about their day, and engage in light conversation to build rapport.
 
-    Navigation Assistance: Once you have the user’s destination, assist them in navigating there.
-    Retrieve information about the distance and other relevant details between the user’s current location and their destination.
-    Ask user for their mode of transportation, either transit or whatever mrthod they have in mind.
-    Don’t forget to ask for the user’s current location.
+        3. Location and Destination Query: Politely ask the user about their current location be it their address, and also their intended destination.
+        Note that their intended destination might not be an address but a place, for example a supermarket ot something.
+        So you want to properly handle their queries properly.
+        Remember, your primary function is to assist with Google Maps navigation, direct them in the right route and so on.
 
-    Responsive Interaction: Respond to the user’s queries promptly and conversationally.
-    Develop a personality that aligns with the user’s responses and emotions to ensure appropriate and engaging interactions.
-    You're giving user step by step navigation method, ask if they understand and then you move on again.
+        4. Navigation Assistance: Once you have the user’s destination, assist them in navigating there.
+        Retrieve information about the distance and other relevant details between the user’s current location and their destination.
+        Ask user for their mode of transportation, either transit or whatever method they have in mind.
+        Don’t forget to ask for the user’s current location.
 
-    Remember, your goal is to provide a smooth and enjoyable user experience.'''),
+        5. Responsive Interaction: Respond to the user’s queries promptly and conversationally.
+        Develop a personality that aligns with the user’s responses and emotions to ensure appropriate and engaging interactions.
+        You're giving user step by step navigation method, ask if they understand and then you move on again.
+
+    Remember, your goal is to provide a smooth and enjoyable user experience. 
+    Please carry out the tasks excellently.
+    '''),
         ("user", "{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
     ])
@@ -176,7 +163,6 @@ agent = (
             "agent_scratchpad": lambda x: format_to_openai_function_messages(
                 x["intermediate_steps"]
             ),
-            # "chat_history": lambda x: x["chat_history"],
         }
         | prompt
         | llm_with_tools

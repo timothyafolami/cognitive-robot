@@ -152,7 +152,6 @@ def get_directions():
     return jsonify(directions)
 
 
-# @app.route('/process_llm_text', methods=['POST'])
 def process_text(trans_text):
     # global trans_text
     global emotion
