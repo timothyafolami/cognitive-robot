@@ -11,7 +11,6 @@ from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain.agents import load_tools
 from langchain.tools import BaseTool
-from typing import Optional, Type, Union
 from langchain.pydantic_v1 import BaseModel, Field
 import googlemaps
 from datetime import datetime
@@ -20,59 +19,16 @@ from langchain_community.utilities import SerpAPIWrapper
 import warnings
 from langchain.chains import LLMChain
 from langchain_community.tools import GooglePlacesTool
+import json
 warnings.filterwarnings('ignore')
 from dotenv import load_dotenv
 
 load_dotenv()
 
 os.environ["GPLACES_API_KEY"] = os.getenv('GOOGLE_API_KEY')
-os.environ["SERPAPI_API_KEY"] = os.getenv("SERPAPI_API_KEY")
+os.environ["SERPAPI_API_KEY"] = os.getenv("SERP_API_KEY")
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-
-# def get_current_location(api_key):
-#     url = f'https://www.googleapis.com/geolocation/v1/geolocate?key={api_key}'
-#     response = requests.post(url)
-#     if response.status_code == 200:
-#         data = response.json()
-#         latitude = data['location']['lat']
-#         longitude = data['location']['lng']
-#         return latitude, longitude
-#     else:
-#         print("Failed to retrieve location.")
-#         return None, None
-
-
-# latitude, longitude = get_current_location(google_api_key)
-
-# class MapAssistantInput(BaseModel):
-#     initial_location: str = Field(description="The initial location of the user")
-#     destination: Optional[str] = Field(description="The destination of the user")
-#     mov_method: Optional[str] = Field(description="The method of movement")
-
-
-# class MapAssistantTool(BaseTool):
-#     name = "map_assistant"
-#     description = "This tool helps with getting information about the user movement"
-#     args_schema: Type[BaseModel] = MapAssistantInput
-
-#     def _run(self, initial_location: str, destination: Optional[str] = None, mov_method: Optional[str] = None) -> Union[
-#         dict, str]:
-#         gmaps = googlemaps.Client(key=google_api_key)
-
-#         # Geocoding an address
-#         geocode_result = gmaps.geocode(initial_location)
-
-#         # Request directions via public transit
-#         now = datetime.now()
-#         directions_result = gmaps.directions(initial_location,
-#                                              destination,
-#                                              mode=mov_method,
-#                                              departure_time=now)
-#         if geocode_result:
-#             return geocode_result
-#         if directions_result:
-#             return directions_result
 
 
 places = GooglePlacesTool()
@@ -208,18 +164,3 @@ def test():
         res1 = agent_executor.invoke({"input": input1})
         print(res1['output'])
 
-
-# app = Flask(__name__)
-
-
-# @app.route('/process_llm_text', methods=['POST'])
-# def process_text():
-#     data = request.get_json()
-#     input_text = data['input_text']
-#     agent_executor = ae()
-#     result = agent_executor.invoke({"input": input_text})
-#     return jsonify({'output': result['output']})
-
-
-# if __name__ == '__main__':
-#     app.run(debug=True)
