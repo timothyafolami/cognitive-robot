@@ -13,6 +13,12 @@ from langchain.agents import load_tools
 from langchain.tools import BaseTool
 from langchain.pydantic_v1 import BaseModel, Field
 import googlemaps
+from langchain_core.prompts.chat import (
+    ChatPromptTemplate,
+    HumanMessagePromptTemplate,
+    SystemMessagePromptTemplate,
+    MessagesPlaceholder,
+)
 from datetime import datetime
 from langchain.agents import AgentType, Tool, initialize_agent
 from langchain_community.utilities import SerpAPIWrapper
@@ -87,7 +93,7 @@ prompt = ChatPromptTemplate.from_messages(
         2. Establishing Connection: Initiate the conversation by getting to know the user by asking the user questions.
         Ask about their name, inquire about their day, and engage in light conversation to build rapport.
 
-        3. Location and Destination Query: Politely ask the user about their current location be it their address, and also their intended destination.
+        3. Location and Destination Query: Politely ask the user about their current location , and also their intended destination.
         Note that their intended destination might not be an address but a place, for example a supermarket ot something.
         So you want to properly handle their queries properly.
         Remember, your primary function is to assist with Google Maps navigation, direct them in the right route and so on.
