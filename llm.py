@@ -35,9 +35,46 @@ os.environ["GPLACES_API_KEY"] = os.getenv('GOOGLE_API_KEY')
 os.environ["SERPAPI_API_KEY"] = os.getenv("SERP_API_KEY")
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
+from openai import OpenAI
+
+client = OpenAI()
+class LocationExtractorAssistant:
+    def __init__(self):
+        self.prompt = '''
+        You are a Location Extractor Assistant. 
+        You receive a list of locations gotten from the google places tool. 
+        Your job is to extract the first two locations and return their names and addresses.
+        You return them as output. 
+
+        Query:
+        {query}
+
+        Output:
+
+        '''
+    
+    def run(self, query):
+        # Automatic getting the user location
+        places = GooglePlacesTool()  # Assuming GooglePlacesTool is a valid class
+        user_location = places.run(query)
+        
+        # Creating a dictionary to hold the query
+        user_query = {'query': user_location}
+        
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo-16k",
+            messages=[{
+                "role": "system",
+                "content": self.prompt.format(**user_query)
+            }],
+            temperature=0,
+        )
+        
+        return response.choices[0].message.content
 
 
-places = GooglePlacesTool()
+
+places = LocationExtractorAssistant()
 search = SerpAPIWrapper()
 llm_math = load_tools(['llm-math'], llm=ChatOpenAI(temperature=0, openai_api_key=OPENAI_API_KEY))
 
@@ -48,7 +85,7 @@ def google_map_ass(text):
     Used for location and navigation.
     """
     # getting latitude and longitude
-    response = places.run(text)
+    response = places.run(query=text)
     return response
 
 
@@ -169,4 +206,3 @@ def test():
         )
         res1 = agent_executor.invoke({"input": input1})
         print(res1['output'])
-

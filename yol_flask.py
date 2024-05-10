@@ -13,7 +13,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 from sqlalchemy.orm import sessionmaker
 from ultralytics import YOLO
-
 from flask import Flask, request, jsonify, render_template
 from langchain_core.prompts.chat import (
     ChatPromptTemplate,
@@ -149,6 +148,8 @@ def get_directions():
     data = request.json
     text = data.get('text', '')
     directions = le(text)
+    print(data)
+    print(directions)
     return jsonify(directions)
 
 
