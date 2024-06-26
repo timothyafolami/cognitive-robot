@@ -32,9 +32,48 @@ os.environ["SERPAPI_API_KEY"] = os.getenv("SERP_API_KEY")
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 from openai import OpenAI
+<<<<<<< HEAD
+=======
+
+client = OpenAI()
+class LocationExtractorAssistant:
+    def __init__(self):
+        self.prompt = '''
+        You are a Location Extractor Assistant. 
+        You receive a list of locations gotten from the google places tool. 
+        Your job is to extract the first two locations and return their names and addresses.
+        You return them as output. 
+
+        Query:
+        {query}
+
+        Output:
+
+        '''
+    
+    def run(self, query):
+        # Automatic getting the user location
+        places = GooglePlacesTool()  # Assuming GooglePlacesTool is a valid class
+        user_location = places.run(query)
+        
+        # Creating a dictionary to hold the query
+        user_query = {'query': user_location}
+        
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo-16k",
+            messages=[{
+                "role": "system",
+                "content": self.prompt.format(**user_query)
+            }],
+            temperature=0,
+        )
+        
+        return response.choices[0].message.content
+>>>>>>> b60db8e40ae15a323a69860bf18da8d2ad14327c
 
 client = OpenAI()
 
+<<<<<<< HEAD
 class LocationExtractorAssistant:
     def __init__(self):
         self.prompt = '''
@@ -67,6 +106,9 @@ class LocationExtractorAssistant:
         return response.choices[0].message.content
 
 # Initialize instances
+=======
+
+>>>>>>> b60db8e40ae15a323a69860bf18da8d2ad14327c
 places = LocationExtractorAssistant()
 search = SerpAPIWrapper()
 llm_math = load_tools(['llm-math'], llm=ChatOpenAI(temperature=0, openai_api_key=OPENAI_API_KEY))
@@ -74,7 +116,14 @@ llm_math = load_tools(['llm-math'], llm=ChatOpenAI(temperature=0, openai_api_key
 # Define tools
 @tool
 def google_map_ass(text):
+<<<<<<< HEAD
     """Used when there is a need search for places around user."""
+=======
+    """Used when there is a need search for places around user. 
+    Used for location and navigation.
+    """
+    # getting latitude and longitude
+>>>>>>> b60db8e40ae15a323a69860bf18da8d2ad14327c
     response = places.run(query=text)
     return response
 
@@ -161,8 +210,19 @@ def test():
         input1 = input("You: ")
         agent_executor = ae()
         result = agent_executor.invoke({"input": input1})
+<<<<<<< HEAD
         print(result['output'])
 
 # Example usage:
 if __name__ == "__main__":
     test()
+=======
+        chat_history.extend(
+            [
+                HumanMessage(content=input1),
+                AIMessage(content=result["output"]),
+            ]
+        )
+        res1 = agent_executor.invoke({"input": input1})
+        print(res1['output'])
+>>>>>>> b60db8e40ae15a323a69860bf18da8d2ad14327c

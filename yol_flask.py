@@ -158,6 +158,8 @@ def get_directions():
     data = request.json
     text = data.get('text', '')
     directions = le(text)
+    print(data)
+    print(directions)
     return jsonify(directions)
 
 def process_text(trans_text):
