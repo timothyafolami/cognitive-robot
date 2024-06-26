@@ -62,14 +62,14 @@
         </button>
 
         <div class="z-20 absolute">
-        <!-- <button
+        <button
           class="btn btn-danger bg-red-800 px-2 py-1 rounded-md text-white"
           id="stopButton"
           style="display: none"
           onclick="stopPrediction()"
         > 
           Stop Emotion Prediction
-        </button> -->
+        </button>
         </div>
         <div id="result" class="absolute z-20 bottom-10"></div>
         
@@ -536,11 +536,12 @@
         })
           .then((response) => response.json())
           .then((transcription) => {
-            // console.log(transcription.transcribed_text)
+            console.log(transcription.transcribed_text)
             transcriptionDiv.textContent += "You: " + transcription.transcribed_text + " ";
             const llmResultDiv = document.getElementById('llmResult');
             llmResultDiv.textContent = "Bot: " + transcription.llm_output;
-            speak(transcription.llm_output)
+            speak(transcription.llm_output);
+            getDirections(transcription.transcribed_text);
           })
           .catch((error) => console.error("Error:", error));
       }
@@ -634,7 +635,8 @@
     </script>
     <script>
       function getDirections() {
-        const text = "I'm currently at bosso, Minna.. and I'm going to try to find the nearest supermarket in chanchaga Minna.. \nemotion: Neutral";
+        // const text = "I'm currently at lagos.. and I'm going to try to find the nearest supermarket in abuja.. \nemotion: Neutral";
+        const text = llmResult.textContent.trim();
         fetch('/get_directions', {
             method: 'POST',
             headers: {
@@ -645,14 +647,14 @@
         .then(response => response.json())
         .then(data => {
             console.log(data['current location'], data['destination']);
-            document.getElementById('origin-input').textContent = data['current location'];
-            document.getElementById('destination-input').textContent = data['destination'];
+            document.getElementById('origin-input').value = data['current location'];
+            document.getElementById('destination-input').value = data['destination'];
         })
         .catch(error => console.error('Error:', error));
     }
 
     // Call getDirections when the page loads
-    window.onload = getDirections;
+    // window.onload = getDirections;
     </script>
   </body>
 </html>

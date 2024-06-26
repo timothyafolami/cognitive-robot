@@ -109,6 +109,34 @@ async function initMap() {
       );
     });
 
+  
+  // // Listen for changes in the origin and destination input fields
+  // originInput.addEventListener("input", handleDirectionsRequest());
+  // destinationInput.addEventListener("input", handleDirectionsRequest());
+
+  // // Function to handle the directions request
+  // function handleDirectionsRequest() {
+  //   const originValue = originInput.value.trim();
+  //   const destinationValue = destinationInput.value.trim();
+  //     console.log(originValue)
+
+  //   // Check if both origin and destination fields are not empty
+  //   if (originValue !== '' && destinationValue !== '') {
+  //     // Trigger the directions request
+  //     directionsService.route({
+  //       origin: originValue,
+  //       destination: destinationValue,
+  //       travelMode: "DRIVING",
+  //     }, function (response, status) {
+  //       if (status === "OK") {
+  //         directionsRenderer.setDirections(response);
+  //       } else {
+  //         window.alert("Directions request failed due to " + status);
+  //       }
+  //     });
+  //   }
+  // }
+
   infoWindow = new google.maps.InfoWindow();
 
   const locationButton = document.createElement("button");

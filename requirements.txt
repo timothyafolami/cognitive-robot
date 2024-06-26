@@ -4,6 +4,9 @@ sqlalchemy
 openai
 langchain
 langchain_openai
-langchain_community
 psycopg2-binary
+groq
+langchain_groq
+llama-parse 
+python-dotenv
 ultralytics
