@@ -23,6 +23,7 @@ from langchain_core.prompts.chat import (
 from langchain.chains import LLMChain
 from langchain_community.utilities import SerpAPIWrapper
 from langchain_community.tools import GooglePlacesTool
+from openai import OpenAI
 
 warnings.filterwarnings('ignore')
 
@@ -31,11 +32,10 @@ os.environ["GPLACES_API_KEY"] = os.getenv('GOOGLE_API_KEY')
 os.environ["SERPAPI_API_KEY"] = os.getenv("SERP_API_KEY")
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-from openai import OpenAI
-<<<<<<< HEAD
-=======
+from openai import AzureOpenAI
 
 client = OpenAI()
+
 class LocationExtractorAssistant:
     def __init__(self):
         self.prompt = '''
@@ -69,11 +69,8 @@ class LocationExtractorAssistant:
         )
         
         return response.choices[0].message.content
->>>>>>> b60db8e40ae15a323a69860bf18da8d2ad14327c
 
 client = OpenAI()
-
-<<<<<<< HEAD
 class LocationExtractorAssistant:
     def __init__(self):
         self.prompt = '''
@@ -106,9 +103,7 @@ class LocationExtractorAssistant:
         return response.choices[0].message.content
 
 # Initialize instances
-=======
 
->>>>>>> b60db8e40ae15a323a69860bf18da8d2ad14327c
 places = LocationExtractorAssistant()
 search = SerpAPIWrapper()
 llm_math = load_tools(['llm-math'], llm=ChatOpenAI(temperature=0, openai_api_key=OPENAI_API_KEY))
@@ -116,14 +111,12 @@ llm_math = load_tools(['llm-math'], llm=ChatOpenAI(temperature=0, openai_api_key
 # Define tools
 @tool
 def google_map_ass(text):
-<<<<<<< HEAD
+
     """Used when there is a need search for places around user."""
-=======
     """Used when there is a need search for places around user. 
     Used for location and navigation.
     """
     # getting latitude and longitude
->>>>>>> b60db8e40ae15a323a69860bf18da8d2ad14327c
     response = places.run(query=text)
     return response
 
@@ -210,19 +203,17 @@ def test():
         input1 = input("You: ")
         agent_executor = ae()
         result = agent_executor.invoke({"input": input1})
-<<<<<<< HEAD
+
         print(result['output'])
 
 # Example usage:
-if __name__ == "__main__":
-    test()
-=======
-        chat_history.extend(
-            [
-                HumanMessage(content=input1),
-                AIMessage(content=result["output"]),
-            ]
-        )
-        res1 = agent_executor.invoke({"input": input1})
-        print(res1['output'])
->>>>>>> b60db8e40ae15a323a69860bf18da8d2ad14327c
+# if __name__ == "__main__":
+#     test()
+#     chat_history.extend(
+#         [
+#             HumanMessage(content=input1),
+#             AIMessage(content=result["output"]),
+#         ]
+#     )
+#     res1 = agent_executor.invoke({"input": input1})
+        # print(res1['output'])
